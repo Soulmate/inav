@@ -680,34 +680,62 @@ static void osdDJIFormatDistanceStr(char *buff, int32_t dist)
 {
     int32_t centifeet;
 
-    switch (osdConfig()->units) {
-        case OSD_UNIT_IMPERIAL:
-            centifeet = CENTIMETERS_TO_CENTIFEET(dist);
-            if (abs(centifeet) < FEET_PER_MILE * 100 / 2) {
-                // Show feet when dist < 0.5mi
-                tfp_sprintf(buff, "%d%s", (int)(centifeet / 100), "FT");
+    centifeet = CENTIMETERS_TO_CENTIFEET(dist);
+    if (osdConfig()->hud_radar_disp > 0)
+    { // Display the POI from the radar
+        for (uint8_t i = 0; i < osdConfig()->hud_radar_disp; i++)
+        {
+            if (radar_pois[i].gps.lat != 0 && radar_pois[i].gps.lon != 0 && radar_pois[i].state < 2)
+            { // state 2 means POI has been lost and must be skipped
+                fpVector3_t poi;
+                geoConvertGeodeticToLocal(&poi, &posControl.gpsOrigin, &radar_pois[i].gps, GEO_ALT_RELATIVE);
+                radar_pois[i].distance = calculateDistanceToDestination(&poi) / 100; // In meters
+
+                if (radar_pois[i].distance >= osdConfig()->hud_radar_range_min && radar_pois[i].distance <= osdConfig()->hud_radar_range_max)
+                {
+                    radar_pois[i].direction = calculateBearingToDestination(&poi) / 100; // In °
+                    radar_pois[i].altitude = (radar_pois[i].gps.alt - osdGetAltitude()) / 100;
+                    // osdHudDrawPoi(radar_pois[i].distance, osdGetHeadingAngle(radar_pois[i].direction), radar_pois[i].altitude, 1, 65 + i, radar_pois[i].heading, radar_pois[i].lq);
+                    tfp_sprintf(buff, "%d%d%d", radar_pois[i].distance, osdGetHeadingAngle(radar_pois[i].direction), radar_pois[i].altitude);
+                }
             }
-            else {
-                // Show miles when dist >= 0.5mi
-                tfp_sprintf(buff, "%d.%02d%s", (int)(centifeet / (100*FEET_PER_MILE)),
-                (abs(centifeet) % (100 * FEET_PER_MILE)) / FEET_PER_MILE, "Mi");
-            }
-            break;
-        case OSD_UNIT_UK:
-            FALLTHROUGH;
-        case OSD_UNIT_METRIC:
-            if (abs(dist) < METERS_PER_KILOMETER * 100) {
-                // Show meters when dist < 1km
-                tfp_sprintf(buff, "%d%s", (int)(dist / 100), "M");
-            }
-            else {
-                // Show kilometers when dist >= 1km
-                tfp_sprintf(buff, "%d.%02d%s", (int)(dist / (100*METERS_PER_KILOMETER)),
-                    (abs(dist) % (100 * METERS_PER_KILOMETER)) / METERS_PER_KILOMETER, "KM");
-            }
-            break;
+        }
     }
 }
+
+    // switch (osdConfig()->units)
+    // {
+    // case OSD_UNIT_IMPERIAL:
+    //     centifeet = CENTIMETERS_TO_CENTIFEET(dist);
+    //     if (abs(centifeet) < FEET_PER_MILE * 100 / 2)
+    //     {
+    //         // Show feet when dist < 0.5mi
+    //         tfp_sprintf(buff, "%d%s", (int)(centifeet / 100), "FT");
+    //     }
+    //     else
+    //     {
+    //         // Show miles when dist >= 0.5mi
+    //         tfp_sprintf(buff, "%d.%02d%s", (int)(centifeet / (100 * FEET_PER_MILE)),
+    //                     (abs(centifeet) % (100 * FEET_PER_MILE)) / FEET_PER_MILE, "Mi");
+    //     }
+    //     break;
+    // case OSD_UNIT_UK:
+    //     FALLTHROUGH;
+    // case OSD_UNIT_METRIC:
+    //     if (abs(dist) < METERS_PER_KILOMETER * 100)
+    //     {
+    //         // Show meters when dist < 1km
+    //         tfp_sprintf(buff, "%d%s", (int)(dist / 100), "M");
+    //     }
+    //     else
+    //     {
+    //         // Show kilometers when dist >= 1km
+    //         tfp_sprintf(buff, "%d.%02d%s", (int)(dist / (100 * METERS_PER_KILOMETER)),
+    //                     (abs(dist) % (100 * METERS_PER_KILOMETER)) / METERS_PER_KILOMETER, "KM");
+    //     }
+    //     break;
+    // }
+
 
 static void osdDJIEfficiencyMahPerKM(char *buff)
 {
