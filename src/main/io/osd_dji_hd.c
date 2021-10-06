@@ -696,7 +696,7 @@ static void osdDJIFormatDistanceStr(char *buff, int32_t dist)
                     radar_pois[i].direction = calculateBearingToDestination(&poi) / 100; // In °
                     radar_pois[i].altitude = (radar_pois[i].gps.alt - osdGetAltitude()) / 100;
                     // osdHudDrawPoi(radar_pois[i].distance, osdGetHeadingAngle(radar_pois[i].direction), radar_pois[i].altitude, 1, 65 + i, radar_pois[i].heading, radar_pois[i].lq);
-                    tfp_sprintf(buff, "%d%d%d", radar_pois[i].distance, osdGetHeadingAngle(radar_pois[i].direction), radar_pois[i].altitude);
+                    tfp_sprintf(buff, "%d%s%d%s%d", radar_pois[i].distance,":", osdGetHeadingAngle(radar_pois[i].direction),":", radar_pois[i].altitude);
                 }
             }
         }
