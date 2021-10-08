@@ -2747,7 +2747,7 @@ static bool osdDrawSingleElement(uint8_t item)
             int16_t temperature;
             const bool valid = getIMUTemperature(&temperature);
 //            osdDisplayTemperature(elemPosX, elemPosY, SYM_ESC_TEMP, NULL, escTemperatureValid, (escSensor->temperature)*10, osdConfig()->esc_temp_alarm_min, osdConfig()->esc_temp_alarm_max);
-            osdDisplayTemperature(elemPosX, elemPosY, SYM_ESC_TEMP, NULL, valid, temperature, osdConfig()->esc_temp_alarm_min, osdConfig()->esc_temp_alarm_max);
+            osdDisplayTemperature(elemPosX, elemPosY, SYM_ESC_TEMP, NULL, escTemperatureValid, temperature, osdConfig()->esc_temp_alarm_min, osdConfig()->esc_temp_alarm_max);
 //            osdDisplayTemperature(elemPosX, elemPosY, SYM_IMU_TEMP, NULL, valid, temperature, osdConfig()->imu_temp_alarm_min, osdConfig()->imu_temp_alarm_max);
             return true;
         }
