@@ -676,11 +676,8 @@ static void osdDJIFormatThrottlePosition(char *buff, bool autoThr )
  * Converts distance into a string based on the current unit system.
  * @param dist Distance in centimeters
  */
-static void osdDJIFormatDistanceStr(char *buff, int32_t dist)
+static void osdDJIDisplayRadarInfoStr(char *buff)
 {
-    int32_t centifeet;
-
-    centifeet = CENTIMETERS_TO_CENTIFEET(dist);
     if (osdConfig()->hud_radar_disp > 0)
     { // Display the POI from the radar
         for (uint8_t i = 0; i < osdConfig()->hud_radar_disp; i++)
@@ -696,45 +693,59 @@ static void osdDJIFormatDistanceStr(char *buff, int32_t dist)
                     radar_pois[i].direction = calculateBearingToDestination(&poi) / 100; // In °
                     radar_pois[i].altitude = (radar_pois[i].gps.alt - osdGetAltitude()) / 100;
                     // osdHudDrawPoi(radar_pois[i].distance, osdGetHeadingAngle(radar_pois[i].direction), radar_pois[i].altitude, 1, 65 + i, radar_pois[i].heading, radar_pois[i].lq);
-                    tfp_sprintf(buff, "%d%s%d%s%d", radar_pois[i].distance,":", osdGetHeadingAngle(radar_pois[i].direction),":", radar_pois[i].altitude);
+                    tfp_sprintf(buff, "%s%d%s%d%s%d", "D", radar_pois[i].distance,":H", osdGetHeadingAngle(radar_pois[i].direction),":A", radar_pois[i].altitude);
                 }
             }
+            else
+            {
+                // Show feet when dist < 0.5mi
+                //tfp_sprintf(buff, "%d%s%s%s%d", 300,":", 0x60,":", 100);
+            }
+
         }
     }
 }
 
-    // switch (osdConfig()->units)
-    // {
-    // case OSD_UNIT_IMPERIAL:
-    //     centifeet = CENTIMETERS_TO_CENTIFEET(dist);
-    //     if (abs(centifeet) < FEET_PER_MILE * 100 / 2)
-    //     {
-    //         // Show feet when dist < 0.5mi
-    //         tfp_sprintf(buff, "%d%s", (int)(centifeet / 100), "FT");
-    //     }
-    //     else
-    //     {
-    //         // Show miles when dist >= 0.5mi
-    //         tfp_sprintf(buff, "%d.%02d%s", (int)(centifeet / (100 * FEET_PER_MILE)),
-    //                     (abs(centifeet) % (100 * FEET_PER_MILE)) / FEET_PER_MILE, "Mi");
-    //     }
-    //     break;
-    // case OSD_UNIT_UK:
-    //     FALLTHROUGH;
-    // case OSD_UNIT_METRIC:
-    //     if (abs(dist) < METERS_PER_KILOMETER * 100)
-    //     {
-    //         // Show meters when dist < 1km
-    //         tfp_sprintf(buff, "%d%s", (int)(dist / 100), "M");
-    //     }
-    //     else
-    //     {
-    //         // Show kilometers when dist >= 1km
-    //         tfp_sprintf(buff, "%d.%02d%s", (int)(dist / (100 * METERS_PER_KILOMETER)),
-    //                     (abs(dist) % (100 * METERS_PER_KILOMETER)) / METERS_PER_KILOMETER, "KM");
-    //     }
-    //     break;
-    // }
+static void osdDJIFormatDistanceStr(char *buff, int32_t dist)
+{
+    int32_t centifeet;
+
+    centifeet = CENTIMETERS_TO_CENTIFEET(dist);
+
+     switch (osdConfig()->units)
+     {
+     case OSD_UNIT_IMPERIAL:
+         centifeet = CENTIMETERS_TO_CENTIFEET(dist);
+         if (abs(centifeet) < FEET_PER_MILE * 100 / 2)
+         {
+             // Show feet when dist < 0.5mi
+             tfp_sprintf(buff, "%d%s", (int)(centifeet / 100), "FT");
+         }
+         else
+         {
+             // Show miles when dist >= 0.5mi
+             tfp_sprintf(buff, "%d.%02d%s", (int)(centifeet / (100 * FEET_PER_MILE)),
+                         (abs(centifeet) % (100 * FEET_PER_MILE)) / FEET_PER_MILE, "Mi");
+         }
+         break;
+     case OSD_UNIT_UK:
+         FALLTHROUGH;
+     case OSD_UNIT_METRIC:
+         if (abs(dist) < METERS_PER_KILOMETER * 100)
+         {
+             // Show meters when dist < 1km
+             tfp_sprintf(buff, "%d%s", (int)(dist / 100), "M");
+         }
+         else
+         {
+             // Show kilometers when dist >= 1km
+             tfp_sprintf(buff, "%d.%02d%s", (int)(dist / (100 * METERS_PER_KILOMETER)),
+                         (abs(dist) % (100 * METERS_PER_KILOMETER)) / METERS_PER_KILOMETER, "KM");
+         }
+         break;
+     }
+
+}
 
 
 static void osdDJIEfficiencyMahPerKM(char *buff)
@@ -800,6 +811,9 @@ static void djiSerializeCraftNameOverride(sbuf_t *dst, const char * name)
                 break;
             case 'D':
                 osdDJIFormatDistanceStr(djibuf, getTotalTravelDistance());
+                break;
+            case 'R':
+                osdDJIDisplayRadarInfoStr(djibuf);
                 break;
             case 'W':
                 tfp_sprintf(djibuf, "%s", "MAKE_W_FIRST");
